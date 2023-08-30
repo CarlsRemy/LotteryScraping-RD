@@ -1,0 +1,70 @@
+[
+    {
+        "id": 1,
+        "name": "La Primera Día"
+    },
+    {
+        "id": 2,
+        "name": "Anguila Mañana"
+    },
+    {
+        "id": 3,
+        "name": "La Suerte 12:30"
+    },
+    {
+        "id": 4,
+        "name": "Anguila Medio Día"
+    },
+    {
+        "id": 5,
+        "name": "Quiniela Real"
+    },
+    {
+        "id": 6,
+        "name": "Florida Día"
+    },
+    {
+        "id": 7,
+        "name": "Quiniela LoteDom"
+    },
+    {
+        "id": 8,
+        "name": "New York Tarde"
+    },
+    {
+        "id": 9,
+        "name": "Gana Más"
+    },
+    {
+        "id": 10,
+        "name": "La Suerte 18:00"
+    },
+    {
+        "id": 11,
+        "name": "Anguila Tarde"
+    },
+    {
+        "id": 12,
+        "name": "Quiniela Loteka"
+    },
+    {
+        "id": 13,
+        "name": "Lotería Nacional"
+    },
+    {
+        "id": 14,
+        "name": "Anguila Noche"
+    },
+    {
+        "id": 15,
+        "name": "Quiniela Leidsa"
+    },
+    {
+        "id": 16,
+        "name": "Florida Noche"
+    },
+    {
+        "id": 17,
+        "name": "New York Noche"
+    }
+]
