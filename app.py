@@ -149,6 +149,19 @@ def search_lotery_by_name():
 	return filtered_lotteries
 
 
+
+
+@app.route("/loteria-gana-mas")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("loteria-nacional/gana-mas",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
+
+
 @app.route("/loteria-primera")
 def search_lotery_by_name():
 	search_query = urllib.request.args.get("name")
@@ -157,6 +170,26 @@ def search_lotery_by_name():
 	filtered_lotteries = [lottery for lottery in scrapingByName("la-primera",search_date) if search_query.lower() in lottery["name"].lower()]
 	
 	return filtered_lotteries
+
+@app.route("/loteria-primera-12am")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("la-primera/quiniela-medio-dia",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
+
+@app.route("/loteria-primera-noche")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("la-primera/quiniela-noche",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
 
 @app.route("/loteria-nueva-york")
 def search_lotery_by_name():
@@ -173,6 +206,25 @@ def search_lotery_by_name():
 	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
 	
 	filtered_lotteries = [lottery for lottery in scrapingByName("la-suerte-dominicana",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
+
+@app.route("/loteria-la-suerte-12am")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("la-suerte-dominicana/quiniela",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
+@app.route("/loteria-la-suerte-tarde")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("la-suerte-dominicana/quiniela-tarde",search_date) if search_query.lower() in lottery["name"].lower()]
 	
 	return filtered_lotteries
 
@@ -203,6 +255,25 @@ def search_lotery_by_name():
 	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
 	
 	filtered_lotteries = [lottery for lottery in scrapingByName("loteria-nacional",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
+@app.route("/loteria-quiniela-nacional")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("loteria-nacional/quiniela",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
+
+@app.route("/loteria-gana-mas")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("loteria-nacional/gana-mas",search_date) if search_query.lower() in lottery["name"].lower()]
 	
 	return filtered_lotteries
 
@@ -243,6 +314,45 @@ def search_lotery_by_name():
 	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
 	
 	filtered_lotteries = [lottery for lottery in scrapingByName("americanas",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
+
+@app.route("/loteria-florida-tarde")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("americanas/florida-tarde",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
+
+@app.route("/loteria-florida-noche")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("americanas/florida-noche",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
+
+@app.route("/loteria-new-york-12am")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("americanas/new-york-medio-dia",search_date) if search_query.lower() in lottery["name"].lower()]
+	
+	return filtered_lotteries
+
+@app.route("/loteria-new-york-noche")
+def search_lotery_by_name():
+	search_query = urllib.request.args.get("name")
+	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	filtered_lotteries = [lottery for lottery in scrapingByName("americanas/new-york-noche",search_date) if search_query.lower() in lottery["name"].lower()]
 	
 	return filtered_lotteries
 
