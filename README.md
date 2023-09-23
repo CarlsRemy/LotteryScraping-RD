@@ -35,7 +35,7 @@ Dicho **Json** se utiliza para filtrar y seleccionar las distintas loterías de 
 
 - Obtención de datos de loterías en tiempo real.
 - Búsqueda y filtrado por nombre de lotería y fecha.
-- Filtar entre consorcio de loterias ej:Nacional, leisa, americana etc.
+- Filtar entre consorcio de loterias ej:Nacional, leisa, americana etc
 
 ## Requisitos
 
@@ -48,3 +48,4 @@ Dicho **Json** se utiliza para filtrar y seleccionar las distintas loterías de 
 
 ```bash
 git clone https://github.com/CarlsRemy/LotteryScraping-RD.git
+```

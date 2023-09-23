@@ -1,9 +1,10 @@
 import datetime
-from flask import Flask,jsonify
+from flask import Flask,jsonify, Response, request
 from flask_cors import CORS, cross_origin
 import re
 import urllib.request
 from bs4 import BeautifulSoup
+from xml.etree import ElementTree as ET
 import os
 import json
 
@@ -41,14 +42,14 @@ def load_html(search_date=None):
 
 	return games_blocks
 
-
 def load_html_name(search_name,search_date=None):
 	url1 = f"https://loteriasdominicanas.com/{search_name}"
 
 	# Agregar el parámetro date a la URL si existe
 	if search_date:
 		url1 += f"?date={search_date}"
-        
+
+	
 	# Crea una lista para almacenar los elementos de ambos soups
 	games_blocks = []
 
@@ -64,21 +65,27 @@ def load_html_name(search_name,search_date=None):
 
 	return games_blocks
 
-def scraping(search_date=None):
+def scraping(search_date=None, search_lotery=None):
 	data = []
 	loteries_parser = []
   # Cargar JSON en un Archivo
-	with open('lottery.json') as file:
+	with open('lottery.json', 'r', encoding='utf-8') as file:
 		json_data = file.read()
 		data = json.loads(json_data)
 
+	if search_lotery:
+		data = [item for item in data if  search_lotery.lower() in item["name"].lower()]
+	
+	if len(data) == 0:
+		return data
+
 	# Load HTML 
-	games_blocks = load_html()
+	games_blocks = load_html(search_date)
 
 	for game_block in games_blocks:
 		block = {}
 		title = game_block.find("a", "game-title").getText().strip().lower()
-
+		 
 		filtered_data = [item for item in data if item["name"].lower() == title]
 		if len(filtered_data) == 0:
 			continue  
@@ -95,14 +102,20 @@ def scraping(search_date=None):
 
 	return sorted(loteries_parser, key=lambda k:k["id"])
 
-
-def scrapingByName(search_name,search_date=None):
+def scrapingByName(search_name,search_date=None, search_lotery=None):
 	data = []
 	loteries_parser = []
   # Cargar JSON en un Archivo
-	with open('lottery.json') as file:
+	with open('lottery.json', 'r', encoding='utf-8') as file:
 		json_data = file.read()
 		data = json.loads(json_data)
+
+	
+	if search_lotery:
+		data = [item for item in data if  search_lotery.lower() in item["name"].lower()]
+	
+	if len(data) == 0:
+		return data
 
 	# Load HTML 
 	games_blocks = load_html_name(search_name,search_date)
@@ -127,234 +140,203 @@ def scrapingByName(search_name,search_date=None):
 
 	return sorted(loteries_parser, key=lambda k:k["id"])
 
+def JsonUFT8(data=None):
+	json_string = json.dumps(data,ensure_ascii = False)
+	return Response(json_string, content_type='application/json; charset=utf-8')
 
 app = Flask(__name__)
 CORS(app)
 port = int(os.environ.get("PORT", 5000))
 
-@app.route("/")
+@app.route("/", methods=['GET'])
 def search_lotery():
-  return jsonify(scraping())
-
-
-@app.route("/search")
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
+	data = scraping(search_date)
+	return JsonUFT8(data)
+	 
+@app.route("/search", methods=['GET'])
 def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+	search_query = request.args.get('name', None)
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
+
 	if not search_query:
 		return jsonify({"error": "Missing 'name' parameter"}), 400
 	
-	filtered_lotteries = [lottery for lottery in scraping(search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data =  scraping(search_date, search_query) 
+	return JsonUFT8(data)
+
+@app.route("/loteria-gana-mas", methods=['GET'])
+def search_lotery1():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
+
+	data = scrapingByName("loteria-nacional/gana-mas",search_date,"Gana Más")
+	return JsonUFT8(data)
 
 
+@app.route("/loteria-primera", methods=['GET'])
+def search_lotery2():
+	search_query = request.args.get('name', "primera")
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	data = scrapingByName("la-primera",search_date, search_query) 
+	return JsonUFT8(data)
+
+@app.route("/loteria-primera-12am", methods=['GET'])
+def search_lotery3():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	data = scrapingByName("la-primera/quiniela-medio-dia",search_date, "la primera Día")
+	return JsonUFT8(data)
 
 
-@app.route("/loteria-gana-mas")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-primera-noche", methods=['GET'])
+def search_lotery4():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("loteria-nacional/gana-mas",search_date) if search_query.lower() in lottery["name"].lower()]
+	data = scrapingByName("la-primera/quiniela-noche",search_date, "Primera Noche")
+	return JsonUFT8(data)
+
+@app.route("/loteria-la-suerte", methods=['GET'])
+def search_lotery6():
+	search_query = request.args.get('name', "La Suerte")
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	return filtered_lotteries
+	data = scrapingByName("la-suerte-dominicana",search_date, search_query)
+	return JsonUFT8(data)
 
 
+@app.route("/loteria-la-suerte-12am", methods=['GET'])
+def search_lotery7():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	data = scrapingByName("la-suerte-dominicana/quiniela",search_date, "La Suerte 12:30")
+	return JsonUFT8(data)
 
-@app.route("/loteria-primera")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-la-suerte-tarde", methods=['GET'])
+def search_lotery8():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("la-primera",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
-
-@app.route("/loteria-primera-12am")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
-	
-	filtered_lotteries = [lottery for lottery in scrapingByName("la-primera/quiniela-medio-dia",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("la-suerte-dominicana/quiniela-tarde",search_date, "La Suerte 18:00")
+	return JsonUFT8(data)
 
 
-@app.route("/loteria-primera-noche")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-lotedom", methods=['GET'])
+def search_lotery9():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("la-primera/quiniela-noche",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("lotedom",search_date, "Quiniela LoteDom")
+	return JsonUFT8(data)
 
 
-@app.route("/loteria-nueva-york")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-anguila", methods=['GET'])
+def search_lotery10():
+	search_query = request.args.get('name', "Anguila")
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("nueva-york",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("anguila",search_date, search_query)
+	return JsonUFT8(data)
 
-@app.route("/loteria-la-suerte")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-anguila-10am", methods=['GET'])
+def search_loteryAng():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("la-suerte-dominicana",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("anguila/anguila-manana",search_date, "Anguila Mañana")
+	return JsonUFT8(data)
 
+@app.route("/loteria-anguila-12am", methods=['GET'])
+def search_loteryAng12():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	data = scrapingByName("anguila/anguila-medio-dia",search_date, "Anguila Medio Día")
+	return JsonUFT8(data)
 
-@app.route("/loteria-la-suerte-12am")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-anguila-6pm", methods=['GET'])
+def search_loteryAng6pm():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("la-suerte-dominicana/quiniela",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("anguila/anguila-tarde",search_date, "Anguila Tarde")
+	return JsonUFT8(data)
 
-@app.route("/loteria-la-suerte-tarde")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-anguila-9pm", methods=['GET'])
+def search_loteryAng9pm():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("la-suerte-dominicana/quiniela-tarde",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("anguila/anguila-noche",search_date, "Anguila Noche")
+	return JsonUFT8(data)
 
+@app.route("/loterias-nacionales", methods=['GET'])
+def search_lotery11():
+	search_query = request.args.get('name', None)
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	data = scrapingByName("loteria-nacional",search_date, search_query)	
+	return JsonUFT8(data)
 
-@app.route("/loteria-lotedom")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-nacional", methods=['GET'])
+def search_lotery12():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("lotedom",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
-
-
-@app.route("/loteria-anguila")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
-	
-	filtered_lotteries = [lottery for lottery in scrapingByName("anguila",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("loteria-nacional/quiniela",search_date, "Lotería Nacional")
+	return JsonUFT8(data)
 
 
-@app.route("/loteria-nacional")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-leidsa", methods=['GET'])
+def search_lotery13():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("loteria-nacional",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("leidsa", search_date, "Quiniela Leidsa")
+	return JsonUFT8(data)
 
-@app.route("/loteria-quiniela-nacional")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-real", methods=['GET'])
+def search_lotery14():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("loteria-nacional/quiniela",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("loto-real", search_date, "Quiniela Real")
+	return JsonUFT8(data)
 
 
-@app.route("/loteria-gana-mas")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-loteka", methods=['GET'])
+def search_lotery15():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("loteria-nacional/gana-mas",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("loteka", search_date, "Quiniela Loteka")
+	return JsonUFT8(data)
 
 
-@app.route("/loteria-leidsa")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-americana", methods=['GET'])
+def search_lotery16():
+	search_query = request.args.get('name', None)
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("leidsa", search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("americanas",search_date, search_query)
+	return JsonUFT8(data)
 
-    
-@app.route("/loteria-real")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-florida-tarde", methods=['GET'])
+def search_lotery17():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("loto-real", search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("americanas/florida-tarde",search_date, "Florida Día")
+	return JsonUFT8(data)
 
+@app.route("/loteria-florida-noche", methods=['GET'])
+def search_lotery18():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
+	
+	data = scrapingByName("americanas/florida-noche",search_date, "Florida Noche")
+	return JsonUFT8(data)	
 
-@app.route("/loteria-loteka")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name", '')
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-new-york-12am", methods=['GET'])
+def search_lotery19():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("loteka", search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
+	data = scrapingByName("americanas/new-york-medio-dia",search_date, "New York Tarde")
+	return JsonUFT8(data)
 
-
-@app.route("/loteria-americana")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
+@app.route("/loteria-new-york-noche", methods=['GET']) 
+def search_lotery20():
+	search_date = request.args.get('date', datetime.datetime.now().strftime("%d-%m-%Y"))
 	
-	filtered_lotteries = [lottery for lottery in scrapingByName("americanas",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
-
-
-@app.route("/loteria-florida-tarde")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
-	
-	filtered_lotteries = [lottery for lottery in scrapingByName("americanas/florida-tarde",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
-
-
-@app.route("/loteria-florida-noche")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
-	
-	filtered_lotteries = [lottery for lottery in scrapingByName("americanas/florida-noche",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
-
-
-@app.route("/loteria-new-york-12am")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
-	
-	filtered_lotteries = [lottery for lottery in scrapingByName("americanas/new-york-medio-dia",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
-
-@app.route("/loteria-new-york-noche")
-def search_lotery_by_name():
-	search_query = urllib.request.args.get("name")
-	search_date = urllib.request.request.args.get("date", datetime.datetime.now().strftime("%d-%m-%Y"))
-	
-	filtered_lotteries = [lottery for lottery in scrapingByName("americanas/new-york-noche",search_date) if search_query.lower() in lottery["name"].lower()]
-	
-	return filtered_lotteries
-
+	data = scrapingByName("americanas/new-york-noche",search_date, "New York Noche")
+	return JsonUFT8(data)
 
 app.run(port=port)

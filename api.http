@@ -1,0 +1,31 @@
+### Accept json
+GET http://127.0.0.1:5000
+Accept: application/json
+
+### Accept xml
+GET http://127.0.0.1:5000
+Accept: application/xml
+
+### Accept Not Defined
+GET http://127.0.0.1:5000
+
+### Accept jsonp
+GET http://127.0.0.1:5000?callback=handleResponse
+Accept: application/javascript
+
+### Accept pdf
+GET http://127.0.0.1:5000
+Accept: application/pdf
+
+### Accept ''
+GET http://127.0.0.1:5000
+Accept:
+
+
+### search
+GET http://127.0.0.1:5000/search?name=Gana%20Más
+Accept: application/xml
+
+### loteria gana mas ''
+GET http://127.0.0.1:5000/loteria-gana-mas
+Accept: application/xml
